@@ -5,9 +5,10 @@
 //
 // The default app path is ../discourse-international-app. The privacy policy
 // and the terms of service are generated from the app's own screens,
-// app/(app)/(tabs)/(home)/privacy-policy.tsx and terms-of-service.tsx, so the
-// site and the app always say the same thing: edit the app, run this, commit.
-// The home and support pages are templates in this file.
+// app/(app)/(tabs)/(passport)/privacy-policy.tsx and terms-of-service.tsx
+// (the (home) stack before the UI refresh), so the site and the app always
+// say the same thing: edit the app, run this, commit. The home, support and
+// invitation pages are templates in this file.
 'use strict';
 
 const fs = require('fs');
@@ -15,7 +16,12 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const APP = path.resolve(process.argv[2] || path.join(ROOT, '..', 'discourse-international-app'));
-const SCREENS = path.join(APP, 'app', '(app)', '(tabs)', '(home)');
+// The legal screens moved from the Home stack to the Passport stack with the
+// UI refresh; either layout builds.
+const SCREENS = ['(passport)', '(home)']
+  .map((stack) => path.join(APP, 'app', '(app)', '(tabs)', stack))
+  .find((dir) => fs.existsSync(path.join(dir, 'privacy-policy.tsx')))
+  || path.join(APP, 'app', '(app)', '(tabs)', '(passport)');
 
 const SITE = {
   name: 'Discourse International',
@@ -24,6 +30,8 @@ const SITE = {
   email: 'discourseinternationalsupport@gmail.com',
   facebook: 'https://www.facebook.com/p/Discourse-MX-100095042583812/',
   instagram: 'https://www.instagram.com/discourse_mx/',
+  appStore: 'https://apps.apple.com/app/id6757833966',
+  googlePlay: 'https://play.google.com/store/apps/details?id=com.international.discourse',
   year: new Date().getFullYear(),
 };
 
@@ -281,6 +289,81 @@ function supportPage() {
   });
 }
 
+// 404.html. GitHub Pages serves it for any path with no file, which makes it
+// the invitation page too: a person's QR in the app holds
+// https://discourseinternational.com/m/<their id>?c=<code>
+// (CONNECTIONS-DESIGN.md, sections 1 and 7, in discourse-international-app),
+// so a phone camera without the app lands here. Under /m/ it explains and
+// links to the stores; anywhere else it is a plain "not found". On an iPhone
+// or an Android phone it says, for two seconds, that the store is opening and
+// to scan the code again after signing up, then opens the store (Greg,
+// 2026-11-08); the steps and buttons stay underneath in case it doesn't.
+// Nothing from the link (id or code) is shown, stored or sent anywhere.
+function notFoundPage() {
+  const store = (href, label) =>
+    `<a class="store" href="${href}" rel="noopener">${label}</a>`;
+  const body = `    <section id="invite" hidden>
+      <p id="opening" class="opening" role="status" hidden>
+        <strong>${bi('Opening <span class="store-name-en"></span>…', 'Abriendo <span class="store-name-es"></span>…')}</strong><br>
+        ${bi('After you sign up, open <strong>Scan</strong> and scan their code again.', 'Después de registrarte, abre <strong>Escanear</strong> y escanea su código otra vez.')}
+      </p>
+      <h2>${bi('Exchange stamps on Discourse', 'Intercambia sellos en Discourse')}</h2>
+      <p>${bi(
+        'Someone just showed you their Discourse code. Discourse is a language exchange that meets in person, and everyone you meet gives you a stamp from their country.',
+        'Alguien te acaba de mostrar su código de Discourse. Discourse es un intercambio de idiomas en persona, y cada persona que conoces te da un sello de su país.'
+      )}</p>
+      <ol class="steps">
+        <li>${bi('Get the app and sign up.', 'Descarga la app y regístrate.')}</li>
+        <li>${bi('Open <strong>Scan</strong>.', 'Abre <strong>Escanear</strong>.')}</li>
+        <li>${bi('Ask them to show their code again and scan it: it changes every 30 seconds.', 'Pídele que vuelva a mostrar su código y escanéalo: cambia cada 30 segundos.')}</li>
+      </ol>
+      <div class="stores">
+        ${store(SITE.appStore, 'App Store')}
+        ${store(SITE.googlePlay, 'Google Play')}
+      </div>
+    </section>
+    <section id="missing">
+      <h2>${bi('Page not found', 'Página no encontrada')}</h2>
+      <p><a href="/">${bi('Go to the home page', 'Ir a la página de inicio')}</a></p>
+    </section>`;
+  const page = cardPage({
+    slug: '404',
+    title: { en: 'Discourse', es: 'Discourse' },
+    description: SITE.tagline,
+    body,
+  });
+  // Not indexed; the invitation shows itself under /m/ only, and the store
+  // the phone uses goes first.
+  return page
+    .replace('<meta name="description"', '<meta name="robots" content="noindex">\n<meta name="description"')
+    .replace(
+      '</body>',
+      `<script>
+(function () {
+  if (location.pathname.indexOf('/m/') !== 0) return;
+  document.getElementById('invite').hidden = false;
+  document.getElementById('missing').hidden = true;
+  document.title = 'Discourse · ' + document.querySelector('#invite h2 [data-lang]:not([hidden])').textContent;
+  var ua = navigator.userAgent;
+  var android = /android/i.test(ua);
+  // iPadOS reports itself as a Mac; a touch screen tells them apart.
+  var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (android) {
+    var stores = document.querySelector('.stores');
+    stores.insertBefore(stores.lastElementChild, stores.firstElementChild);
+  }
+  if (!android && !ios) return;
+  var target = android ? '${SITE.googlePlay}' : '${SITE.appStore}';
+  document.querySelectorAll('.store-name-en').forEach(function (el) { el.textContent = android ? 'Google Play' : 'the App Store'; });
+  document.querySelectorAll('.store-name-es').forEach(function (el) { el.textContent = android ? 'Google Play' : 'la App Store'; });
+  document.getElementById('opening').hidden = false;
+  setTimeout(function () { location.href = target; }, 2000);
+})();
+</script>
+</body>`
+    );
+}
+
 function homePage() {
   const rows = [
     ['left', ['DIALOGUE', 'CULTURE', 'CONNECTION', 'EXCHANGE', 'UNITY']],
@@ -335,3 +418,4 @@ write('index.html', homePage());
 write('privacy.html', legalPage('privacy', t.privacy, privacy));
 write('terms.html', legalPage('terms', t.terms, terms));
 write('support.html', supportPage());
+write('404.html', notFoundPage());
