@@ -294,12 +294,19 @@ function supportPage() {
 // https://discourseinternational.com/m/<their id>?c=<code>
 // (CONNECTIONS-DESIGN.md, sections 1 and 7, in discourse-international-app),
 // so a phone camera without the app lands here. Under /m/ it explains and
-// links to the stores; anywhere else it is a plain "not found". Nothing from
-// the link (id or code) is shown, stored or sent anywhere.
+// links to the stores; anywhere else it is a plain "not found". On an iPhone
+// or an Android phone it says, for two seconds, that the store is opening and
+// to scan the code again after signing up, then opens the store (Greg,
+// 2026-11-08); the steps and buttons stay underneath in case it doesn't.
+// Nothing from the link (id or code) is shown, stored or sent anywhere.
 function notFoundPage() {
   const store = (href, label) =>
     `<a class="store" href="${href}" rel="noopener">${label}</a>`;
   const body = `    <section id="invite" hidden>
+      <p id="opening" class="opening" role="status" hidden>
+        <strong>${bi('Opening <span class="store-name-en"></span>…', 'Abriendo <span class="store-name-es"></span>…')}</strong><br>
+        ${bi('After you sign up, open <strong>Scan</strong> and scan their code again.', 'Después de registrarte, abre <strong>Escanear</strong> y escanea su código otra vez.')}
+      </p>
       <h2>${bi('Exchange stamps on Discourse', 'Intercambia sellos en Discourse')}</h2>
       <p>${bi(
         'Someone just showed you their Discourse code. Discourse is a language exchange that meets in person, and everyone you meet gives you a stamp from their country.',
@@ -337,10 +344,20 @@ function notFoundPage() {
   document.getElementById('invite').hidden = false;
   document.getElementById('missing').hidden = true;
   document.title = 'Discourse · ' + document.querySelector('#invite h2 [data-lang]:not([hidden])').textContent;
-  if (/android/i.test(navigator.userAgent)) {
+  var ua = navigator.userAgent;
+  var android = /android/i.test(ua);
+  // iPadOS reports itself as a Mac; a touch screen tells them apart.
+  var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (android) {
     var stores = document.querySelector('.stores');
     stores.insertBefore(stores.lastElementChild, stores.firstElementChild);
   }
+  if (!android && !ios) return;
+  var target = android ? '${SITE.googlePlay}' : '${SITE.appStore}';
+  document.querySelectorAll('.store-name-en').forEach(function (el) { el.textContent = android ? 'Google Play' : 'the App Store'; });
+  document.querySelectorAll('.store-name-es').forEach(function (el) { el.textContent = android ? 'Google Play' : 'la App Store'; });
+  document.getElementById('opening').hidden = false;
+  setTimeout(function () { location.href = target; }, 2000);
 })();
 </script>
 </body>`

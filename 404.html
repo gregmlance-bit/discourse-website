@@ -31,6 +31,10 @@
   </header>
   <div class="card">
     <section id="invite" hidden>
+      <p id="opening" class="opening" role="status" hidden>
+        <strong><span data-lang="en">Opening <span class="store-name-en"></span>…</span><span data-lang="es" hidden>Abriendo <span class="store-name-es"></span>…</span></strong><br>
+        <span data-lang="en">After you sign up, open <strong>Scan</strong> and scan their code again.</span><span data-lang="es" hidden>Después de registrarte, abre <strong>Escanear</strong> y escanea su código otra vez.</span>
+      </p>
       <h2><span data-lang="en">Exchange stamps on Discourse</span><span data-lang="es" hidden>Intercambia sellos en Discourse</span></h2>
       <p><span data-lang="en">Someone just showed you their Discourse code. Discourse is a language exchange that meets in person, and everyone you meet gives you a stamp from their country.</span><span data-lang="es" hidden>Alguien te acaba de mostrar su código de Discourse. Discourse es un intercambio de idiomas en persona, y cada persona que conoces te da un sello de su país.</span></p>
       <ol class="steps">
@@ -85,10 +89,20 @@
   document.getElementById('invite').hidden = false;
   document.getElementById('missing').hidden = true;
   document.title = 'Discourse · ' + document.querySelector('#invite h2 [data-lang]:not([hidden])').textContent;
-  if (/android/i.test(navigator.userAgent)) {
+  var ua = navigator.userAgent;
+  var android = /android/i.test(ua);
+  // iPadOS reports itself as a Mac; a touch screen tells them apart.
+  var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (android) {
     var stores = document.querySelector('.stores');
     stores.insertBefore(stores.lastElementChild, stores.firstElementChild);
   }
+  if (!android && !ios) return;
+  var target = android ? 'https://play.google.com/store/apps/details?id=com.international.discourse' : 'https://apps.apple.com/app/id6757833966';
+  document.querySelectorAll('.store-name-en').forEach(function (el) { el.textContent = android ? 'Google Play' : 'the App Store'; });
+  document.querySelectorAll('.store-name-es').forEach(function (el) { el.textContent = android ? 'Google Play' : 'la App Store'; });
+  document.getElementById('opening').hidden = false;
+  setTimeout(function () { location.href = target; }, 2000);
 })();
 </script>
 </body>

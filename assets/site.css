@@ -67,6 +67,7 @@ a { color: inherit; }
 .stores { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
 .card a.store { display: inline-flex; align-items: center; justify-content: center; min-width: 160px; min-height: 48px; padding: 0 20px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; text-decoration: none; }
 .card a.store:hover { opacity: .9; }
+.opening { margin: 0 0 20px; padding: 14px 16px; border-radius: 12px; background: #f3f1fb; color: var(--ink); }
 
 /* Support */
 .support .block { display: grid; gap: 24px; padding: 32px 0; border-top: 1px solid #e5e7eb; }
