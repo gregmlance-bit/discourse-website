@@ -59,7 +59,7 @@ function clean(s) {
   return s
     .replace(/\{'\\n'\}/g, '<br>')
     .replace(/\{' '\}/g, ' ')
-    .replace(/<Text fontWeight="600">([\s\S]*?)<\/Text>/g, '<strong>$1</strong>')
+    .replace(/<Text fontWeight="[56]00">([\s\S]*?)<\/Text>/g, '<strong>$1</strong>')
     .replace(/<Text[^>]*>/g, '')
     .replace(/<\/Text>/g, '')
     .replace(/\{\s*\}/g, '')
@@ -93,7 +93,7 @@ function paragraphs(jsx) {
 
 function convert(jsx) {
   const out = [];
-  const re = /<Text fontSize=\{12\}>([\s\S]*?)<\/Text>|<H6[^>]*>([\s\S]*?)<\/H6>|<Paragraph[^>]*>([\s\S]*?)<\/Paragraph>/g;
+  const re = /<Text fontSize=\{1[23]\}[^>]*>([\s\S]*?)<\/Text>|<H6[^>]*>([\s\S]*?)<\/H6>|<Paragraph[^>]*>([\s\S]*?)<\/Paragraph>/g;
   let m;
   while ((m = re.exec(jsx))) {
     if (m[1] !== undefined) out.push(`<p class="meta">${clean(m[1])}</p>`);
@@ -112,6 +112,9 @@ function legalScreen(file) {
     throw new Error(`${file}: ${count(en)} EN sections vs ${count(es)} ES sections`);
   }
   const updated = (h) => ((h.match(/(Last Updated|Última actualización):\s*([^<]+)/) || [])[2] || '').trim();
+  // A page without its date means the screen's markup changed again.
+  if (!updated(en) || !updated(es)) throw new Error(`${file}: no "Last Updated" line found`);
+  if (!/<strong>/.test(en) || !/<strong>/.test(es)) throw new Error(`${file}: no bold labels found`);
   return { en, es, sections: count(en), updated: { en: updated(en), es: updated(es) } };
 }
 
@@ -231,8 +234,8 @@ ${legal.en}
 ${legal.es}
     </section>`;
   const description = slug === 'privacy'
-    ? `Privacy policy of the ${SITE.name} app.`
-    : `Terms of service of the ${SITE.name} app.`;
+    ? `Privacy policy of the Discourse Passport app.`
+    : `Terms of service of the Discourse Passport app.`;
   return cardPage({ slug, title, description, body });
 }
 
@@ -307,13 +310,13 @@ function notFoundPage() {
         <strong>${bi('Opening <span class="store-name-en"></span>…', 'Abriendo <span class="store-name-es"></span>…')}</strong><br>
         ${bi('After you sign up, open <strong>Scan</strong> and scan their code again.', 'Después de registrarte, abre <strong>Escanear</strong> y escanea su código otra vez.')}
       </p>
-      <h2>${bi('Exchange stamps on Discourse', 'Intercambia sellos en Discourse')}</h2>
+      <h2>${bi('Exchange stamps on Discourse Passport', 'Intercambia sellos en Discourse Passport')}</h2>
       <p>${bi(
-        'Someone just showed you their Discourse code. Discourse is a language exchange that meets in person, and everyone you meet gives you a stamp from their country.',
-        'Alguien te acaba de mostrar su código de Discourse. Discourse es un intercambio de idiomas en persona, y cada persona que conoces te da un sello de su país.'
+        'Someone just showed you their Discourse Passport code. Discourse is a language exchange that meets in person, and everyone you meet gives you a stamp from their country.',
+        'Alguien te acaba de mostrar su código de Discourse Passport. Discourse es un intercambio de idiomas en persona, y cada persona que conoces te da un sello de su país.'
       )}</p>
       <ol class="steps">
-        <li>${bi('Get the app and sign up.', 'Descarga la app y regístrate.')}</li>
+        <li>${bi('Get the Discourse Passport app and sign up.', 'Descarga la app Discourse Passport y regístrate.')}</li>
         <li>${bi('Open <strong>Scan</strong>.', 'Abre <strong>Escanear</strong>.')}</li>
         <li>${bi('Ask them to show their code again and scan it: it changes every 30 seconds.', 'Pídele que vuelva a mostrar su código y escanéalo: cambia cada 30 segundos.')}</li>
       </ol>
